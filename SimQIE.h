@@ -1,13 +1,10 @@
 // file to store QIE simulation related functions
 
 // To do
-// 1[DONE]fix ADC2Q
-// 2[DONE]ADC2Q Closure test
-// 3. find rise time, fall time for given pulse
-// 4[DONE]Add noise and pedestal
-// 5[DONE]fix TDC threshold
-// 6[DONE]fix TDC for bad pulses
-// 7[DONE]instead of 3, output 10(configurable) ADCs per given pulse
+// 1. Create a base class with all the functionalities
+// 2. Create daughter class according to the pulse parametrization
+// 3. Add eval and integrate functions in daughter accordingly
+// 4. Modify SimQIE so that it can handle any daughter class
 
 #include"TMath.h"
 #include"Pulse.h"

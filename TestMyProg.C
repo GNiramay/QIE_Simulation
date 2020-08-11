@@ -25,8 +25,8 @@ void TestMyProg()
   // Pulse_train();
   // Integration();
   // I2Q();
-  TDC_Check();
-  // Q2Q();
+  // TDC_Check();
+  Q2Q();
 }
 
 void FADC_resp()
@@ -263,8 +263,8 @@ void Q2Q()
   gg->SetMarkerSize(0.4);
   
   tc->SetGrid();
-  SaveMe(tc,"Q2Q");
-  delete tc;
+  // SaveMe(tc,"Q2Q");
+  // delete tc;
 }
 
 void SaveMe(TCanvas* cc, TString fname)
