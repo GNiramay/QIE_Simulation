@@ -1,7 +1,5 @@
 // Program to test the QIE simulation class
-#include"NewSimQIE.h"
-#include"QIE.h"
-// #include"Pulse.h"
+#include"Pulse.h"
 
 void FADC_resp();		// Plot ADC vs charge
 void Q_Error();			// Plot Quantization error vs charge
@@ -30,7 +28,6 @@ void NewTestMyProg()
 void FADC_resp()
 {
   vector<float> QQ,adc;
-  targetScint tsc;
   // SimQIE smq;			// without noise
   // SimQIE smq(10,3);		// with noise. mu=10,sigma=3
   SimQIE smq(200,8);		// with noise. mu=200,sigma=8
@@ -39,7 +36,6 @@ void FADC_resp()
     float charge = i;
     QQ.push_back(charge);
 
-    // adc.push_back(tsc.Q2ADC(charge));
     adc.push_back(smq.Q2ADC(charge));
   }
 
@@ -62,13 +58,11 @@ void FADC_resp()
 void Q_Error()
 {
   vector<float> QQ,Err;
-  targetScint tsc;
   SimQIE smq;
   
   for(int i=10;i<350000;i+=10){
     float charge = i;
     QQ.push_back(charge);
-    // Err.push_back(tsc.Q_Err(charge));
     Err.push_back(smq.QErr(charge));
   }
   

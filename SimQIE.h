@@ -1,7 +1,7 @@
 // file to store QIE simulation related functions
 
 #include"TMath.h"
-#include"NewPulse.h"
+#include"Pulse.h"
 
 class SimQIE
 {
