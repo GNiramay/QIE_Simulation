@@ -1,16 +1,7 @@
 // file to store QIE simulation related functions
 
-// To do
-// 1[DONE]fix ADC2Q
-// 2[DONE]ADC2Q Closure test
-// 3. find rise time, fall time for given pulse
-// 4[DONE]Add noise and pedestal
-// 5[DONE]fix TDC threshold
-// 6[DONE]fix TDC for bad pulses
-// 7[DONE]instead of 3, output 10(configurable) ADCs per given pulse
-
 #include"TMath.h"
-#include"Pulse.h"
+#include"NewPulse.h"
 
 class SimQIE
 {
@@ -24,11 +15,9 @@ public:
   int Q2ADC(float);
   float ADC2Q(int);
 
-  int TDC(Pulse,float);
-  int TDC(PulseGen,float);
+  int TDC(Pulse*,float);
 
-  int* Out_ADC(Pulse,int);	// Output per 25 ns, for N time samples
-  int* Out_ADC(PulseGen,int);	// Output per 25 ns, for N time samples
+  int* Out_ADC(Pulse*,int);	// Output per 25 ns, for N time samples
 
 private:
   int bins[5] = {0,16,36,57,64};
@@ -85,7 +74,6 @@ float SimQIE::ADC2Q(int adc)
     if(v1>bins[i]) ss++;
   }
   int cc = 64*rr+bins[ss];
-  // return(edges[4*rr+ss]+(adc-cc)*sense[4*rr+ss]+sense[4*rr+ss]/2);
   return(edges[4*rr+ss]+(v1-bins[ss])*sense[4*rr+ss]+sense[4*rr+ss]/2);
 }
 
@@ -104,22 +92,6 @@ float SimQIE::QErr(float Q)
   return(sense[a]/(sqrt(12)*Q));
 }
 
-// int SimQIE::TDC(Pulse pp)
-// {
-//   float tt = 0;
-//   while(tt<=25 && pp.eval(tt)<TDC_thr) tt+=0.1;
-//   int temp = (int)(2*tt);
-//   return(temp);
-// }
-
-// int SimQIE::TDC(PulseGen psg)
-// {
-//   float tt = 0;
-//   while(tt<25 && psg.eval(tt)<TDC_thr) tt+=0.1;
-//   int temp = (int)(2*tt);
-//   return(temp);
-// }
-
 void SimQIE::GenerateBins()
 {
   float charge;
@@ -137,40 +109,23 @@ void SimQIE::GenerateBins()
   
 }
 
-int* SimQIE::Out_ADC(Pulse pp,int N)
+int* SimQIE::Out_ADC(Pulse* pp,int N)
 {
   int* OP = new int[N+1];	// N no. of output ADCs
+  OP[0]=0;			// needs to be changed later
+
   for(int i=0;i<N;i++){
-    float QQ = pp.Integrate(i*25,i*25+25);
+    float QQ = pp->Integrate(i*25,i*25+25);
     OP[i+1]=Q2ADC(QQ);
   }
   return(OP);
 }
 
-int* SimQIE::Out_ADC(PulseGen pp,int N)
+int SimQIE::TDC(Pulse* pp, float T0=0)
 {
-  int* OP = new int[N+1];	// N no. of output ADCs
-  for(int i=0;i<N;i++){
-    float QQ = pp.Integrate(i*25,i*25+25);
-    OP[i+1]=Q2ADC(QQ);
-  }
-  return(OP);
-}
-
-int SimQIE::TDC(Pulse pp, float T0=0)
-{
-  if(pp.eval(T0)>TDC_thr) return(62);		// when pulse starts high
+  if(pp->eval(T0)>TDC_thr) return(62);		// when pulse starts high
   for(float tt=T0;tt<T0+25;tt+=0.1){
-    if(pp.eval(tt)>=TDC_thr) return((int)(2*tt));
-  }
-  return(63);			// when pulse remains low all along
-}
-
-int SimQIE::TDC(PulseGen pp, float T0=0)
-{
-  if(pp.eval(T0)>TDC_thr) return(62);		// when pulse starts high
-  for(float tt=T0;tt<T0+25;tt+=0.1){
-    if(pp.eval(tt)>=TDC_thr) return((int)(2*tt));
+    if(pp->eval(tt)>=TDC_thr) return((int)(2*tt));
   }
   return(63);			// when pulse remains low all along
 }
