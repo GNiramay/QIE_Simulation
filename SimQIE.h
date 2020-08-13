@@ -9,15 +9,15 @@ public:
   SimQIE(bool DBG=false);		      // without noise & pedestal
   SimQIE(float pd, float sg, bool DBG=false); // with noise & pedestal
 
-  float QBins[257];
+  float QBins[257];		// DO NOT USE. Problem with oevrlapping regions
 
   float QErr(float);
   int Q2ADC(float);
   float ADC2Q(int);
 
   int TDC(Pulse*,float);
-
   int* Out_ADC(Pulse*,int);	// Output per 25 ns, for N time samples
+  int* CapID(Pulse*, int);	// return CapID for N time samples
 
 private:
   int bins[5] = {0,16,36,57,64};
@@ -128,4 +128,17 @@ int SimQIE::TDC(Pulse* pp, float T0=0)
     if(pp->eval(tt)>=TDC_thr) return((int)(2*tt));
   }
   return(63);			// when pulse remains low all along
+}
+
+int* SimQIE::CapID(Pulse* pp, int N)
+{
+  int* OP = new int[N+1];	// N no. of output CapIDs
+  OP[0]=0;			// needs to be changed later
+  TRandomGen<ROOT::Math::MixMaxEngine<240,0>> rng;
+  OP[1]=rng.Integer(4);
+  for(int i=1;i<N;i++){
+    OP[i+1]=(OP[i]+1)%4;
+  }
+  return(OP);
+
 }

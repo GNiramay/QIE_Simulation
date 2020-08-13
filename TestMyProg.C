@@ -1,5 +1,5 @@
 // Program to test the QIE simulation class
-#include"Pulse.h"
+#include"SimQIE.h"
 
 void FADC_resp();		// Plot ADC vs charge
 void Q_Error();			// Plot Quantization error vs charge
@@ -8,13 +8,14 @@ void Integration();		// Integrate a single pulse
 void I2Q();			// simulating current pulse to ADC
 void TDC_Check();		// Plot TDC vs. pulse delay
 void Q2Q();			// closure test. do Q2ADC and then ADC to Q
+void Plot_CapID();		// To plot capacitor ID
 
-bool DoSave=false;		// whether to print graphs and histograms
+bool DoSave=true;		// whether to print graphs and histograms
 
 void SaveMe(TCanvas*,TString);		// To save TCanvas as pdf & png
 void Good_g(TGraph* gg,int mc, int mst=21, int msz=1);
 
-void NewTestMyProg()
+void TestMyProg()
 {
   // FADC_resp();
   // Q_Error();
@@ -22,7 +23,8 @@ void NewTestMyProg()
   // Integration();
   // I2Q();
   // TDC_Check();
-  Q2Q();
+  // Q2Q();
+  Plot_CapID();
 }
 
 void FADC_resp()
@@ -231,6 +233,20 @@ void Q2Q()
   tc->SetGrid();
   SaveMe(tc,"Q2Q");
   if(DoSave) delete tc;
+}
+
+void Plot_CapID()
+{
+  SimQIE smq;
+  Bimoid* bm = new Bimoid(0,0.9,2.1);
+  int* capid = smq.CapID(bm,10);
+  TGraph* tg = new TGraph(10);
+  for(int i=0;i<10;i++) tg->SetPoint(i,i,capid[i+1]);
+  TCanvas* tc = new TCanvas("aa","bb",800,600);
+  tg->Draw("apl");
+  Good_g(tg,1);
+  tg->SetTitle("capacitance ID;Time sample; CapID");
+  SaveMe(tc,"CapID");
 }
 
 void SaveMe(TCanvas* cc, TString fname)
