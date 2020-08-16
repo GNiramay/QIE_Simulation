@@ -33,7 +33,33 @@ private:
   float Q0;			// Net charge (integral I.dt)
 };
 
-/////////////////////////////////////////////////////////////////////////
+////////////////piece-wise Exponential pulse/////////////////////////////
+
+class Expo: public Pulse
+{
+public:
+  Expo();					   // default constructor
+  Expo(float k_,float tmax_,float tstart_=0,float Q_=1); // main constructor
+
+  float GetRise(){return(rt);}	// return rise time
+  float GetFall(){return(ft);}	// return fall time
+  void SetRiseFall(float rr,float ff);
+
+  float eval(float T);
+  float Integrate(float T1,float T2);
+  float Max();
+  float Der(float T);
+private:
+  float t0;			// pulse start time
+  float k;			// 1/RC time constant (for the capacitor)
+  float tmax;			// time when pulse attains maximum
+  float NC;			// normalization constant
+  float rt=-1;			// rise time
+  float ft=-1;			// fall time
+
+  float I_Int(float T);		// Indefinite integral
+};
+////////////////piece-wise Exponential pulse/////////////////////////////
 
 Bimoid::Bimoid(float start,float qq=1)
 {
@@ -97,4 +123,63 @@ float Bimoid::Der(float T)
   float v2 = E2/(ft*pow(1+E2,2));
 
   return((v1-v2)/NC);		// Actual derivative
+}
+
+Expo::Expo(){}
+Expo::Expo(float k_,float tmax_,float tstart_=0,float Q_=1)
+{
+  k=k_;
+  tmax=tmax_;
+  t0=tstart_;
+  NC = Q_/tmax;
+
+  rt = (log(9+exp(-k*tmax))-log(1+9*exp(-k*tmax)))/k;
+  ft = log(9)/k;
+}
+
+void Expo::SetRiseFall(float rr, float ff)
+{
+  rt=rr;
+  ft=ff;
+}
+
+float Expo::eval(float t_)
+{
+  if(t_<=t0) return(0);
+  float T = t_-t0;
+  if(T<tmax) return(NC*(1-exp(-k*T))/tmax);
+  else{
+    return(NC*(1-exp(-k*tmax))*exp(k*(tmax-T))/tmax);
+  }
+  return(-1);
+}
+
+float Expo::Max()
+{
+  return NC*(1-exp(-k*tmax))/tmax;
+}
+
+float Expo::Integrate(float T1, float T2)
+{
+  if(T2<=t0) return(0);
+  return(I_Int(T2)-I_Int(T1));
+}
+
+float Expo::Der(float T)
+{
+  if(T<=t0) return(0);
+  float t=T-t0;
+  if(t<=tmax) return(NC*k*exp(-k*t));
+  return(-NC*k*(1-exp(-k*tmax))*exp(k*(tmax-t)));
+}
+
+float Expo::I_Int(float T)
+{
+  if(T<=t0) return(0);
+  float t=T-t0;
+  if(t<tmax) return(NC*(k*t+exp(-k*t)-1)/k);
+
+  float c1 = (1-exp(-k*tmax))/k;
+  float c2 = tmax-c1*exp(k*(tmax-t));
+  return(NC*c2);
 }
