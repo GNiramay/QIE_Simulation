@@ -7,7 +7,7 @@ void I2Q();			// simulating current pulse to ADC
 void TDC_Check();		// Plot TDC vs. pulse delay
 void Plot_CapID();		// To plot capacitor ID
 
-bool DoSave=true;		// whether to print graphs and histograms
+bool DoSave=false;		// whether to print graphs and histograms
 
 void SaveMe(TCanvas*,TString);		// To save TCanvas as pdf & png
 void Good_g(TGraph* gg,int mc, int mst=21, int msz=1);
@@ -15,7 +15,7 @@ void Good_g(TGraph* gg,int mc, int mst=21, int msz=1);
 void Test_Expo()
 {
   Plot_Pulse();
-  Integration();
+  // Integration();
   // I2Q();
   // TDC_Check();
   // Plot_CapID();

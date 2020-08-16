@@ -141,6 +141,9 @@ void Expo::SetRiseFall(float rr, float ff)
 {
   rt=rr;
   ft=ff;
+  
+  k = log(9)/ft;
+  tmax = (log(9-exp(-k*rt))-log(9*exp(-k*rt)-1))/k;
 }
 
 float Expo::eval(float t_)
