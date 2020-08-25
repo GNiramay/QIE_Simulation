@@ -1,5 +1,4 @@
 // file to store QIE simulation related functions
-
 #include"TMath.h"
 #include"Pulse.h"
 
@@ -16,7 +15,8 @@ public:
   float ADC2Q(int);
 
   int TDC(Pulse*,float);
-  int* Out_ADC(Pulse*,int);	// Output per 25 ns, for N time samples
+  int* Out_ADC(Pulse*,int);	// ADC output per 25 ns, for N time samples
+  int* Out_TDC(Pulse*,int);	// TDC output per 25 ns, for N time samples
   int* CapID(Pulse*, int);	// return CapID for N time samples
 
 private:
@@ -111,12 +111,14 @@ void SimQIE::GenerateBins()
 
 int* SimQIE::Out_ADC(Pulse* pp,int N)
 {
-  int* OP = new int[N+1];	// N no. of output ADCs
-  OP[0]=0;			// needs to be changed later
+  int* OP = new int[N];	// N no. of output ADCs
+  // int* OP = new int[N+1];	// N no. of output ADCs
+  // OP[0]=0;			// needs to be changed later
 
   for(int i=0;i<N;i++){
     float QQ = pp->Integrate(i*25,i*25+25);
-    OP[i+1]=Q2ADC(QQ);
+    // OP[i+1]=Q2ADC(QQ);
+    OP[i]=Q2ADC(QQ);
   }
   return(OP);
 }
@@ -132,13 +134,30 @@ int SimQIE::TDC(Pulse* pp, float T0=0)
 
 int* SimQIE::CapID(Pulse* pp, int N)
 {
-  int* OP = new int[N+1];	// N no. of output CapIDs
-  OP[0]=0;			// needs to be changed later
+  int* OP = new int[N];	// N no. of output CapIDs
+  // int* OP = new int[N+1];	// N no. of output CapIDs
+  // OP[0]=0;			// needs to be changed later
+
   TRandomGen<ROOT::Math::MixMaxEngine<240,0>> rng;
-  OP[1]=rng.Integer(4);
+  // OP[1]=rng.Integer(4);
+  OP[0]=rng.Integer(4);
   for(int i=1;i<N;i++){
-    OP[i+1]=(OP[i]+1)%4;
+    // OP[i+1]=(OP[i]+1)%4;
+    OP[i]=(OP[i-1]+1)%4;
   }
   return(OP);
 
+}
+
+int* SimQIE::Out_TDC(Pulse* pp,int N)
+{
+  int* OP = new int[N];	// N no. of output ADCs
+  // int* OP = new int[N+1];	// N no. of output ADCs
+  // OP[0]=0;			// needs to be changed later
+
+  for(int i=0;i<N;i++){
+    // OP[i+1]=TDC(pp,i*25);
+    OP[i]=TDC(pp,i*25);
+  }
+  return(OP);
 }

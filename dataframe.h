@@ -4,12 +4,12 @@
 
 class dataframe
 {
-public: 
+public:
   dataframe(int maxTS_,Pulse* pl);
 
-  int* getADC(){return(ADCs);}
-  int* getTDC(){return(TDCs);}
-  int* getCID(){return(CIDs);}
+  int* GetADC(){return(ADCs);}
+  int* GetTDC(){return(TDCs);}
+  int* GetCID(){return(CIDs);}
   
 // private:
   int maxTS;			// no. of time samples stored
