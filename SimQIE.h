@@ -19,6 +19,7 @@ public:
 
   int TDC(Pulse*,float);
   int* Out_ADC(Pulse*,int);	// Output per time sample, for N time samples
+  int* Out_TDC(Pulse*,int);	// Output per time sample, for N time samples
   int* CapID(Pulse*, int);	// return CapID for N time samples
 
 private:
@@ -50,7 +51,7 @@ SimQIE::SimQIE(float PD, float SG, bool DBG=false)
 
 void SimQIE::SetGain(float gg=1e+6)
 {
-  Gain = gg*1600;		// to convert from 1.6e-19 to fC
+  Gain = gg*16e-5;		// to convert from 1.6e-19 to fC
 }
 
 void SimQIE::SetFreq(float sf = 40)
@@ -89,7 +90,9 @@ float SimQIE::ADC2Q(int adc)
     if(v1>bins[i]) ss++;
   }
   int cc = 64*rr+bins[ss];
-  return(edges[4*rr+ss]+(v1-bins[ss])*sense[4*rr+ss]+sense[4*rr+ss]/2);
+  // return(edges[4*rr+ss]+(v1-bins[ss])*sense[4*rr+ss]+sense[4*rr+ss]/2);
+  float temp=edges[4*rr+ss]+(v1-bins[ss])*sense[4*rr+ss]+sense[4*rr+ss]/2;
+  return(temp/Gain);
 }
 
 float SimQIE::QErr(float Q)
@@ -126,12 +129,11 @@ void SimQIE::GenerateBins()
 
 int* SimQIE::Out_ADC(Pulse* pp,int N)
 {
-  int* OP = new int[N+1];	// N no. of output ADCs
-  OP[0]=0;			// needs to be changed later
+  int* OP = new int[N];	// N no. of output ADCs
 
   for(int i=0;i<N;i++){
     float QQ = pp->Integrate(i*Tau,i*Tau+Tau);
-    OP[i+1]=Q2ADC(QQ);
+    OP[i]=Q2ADC(QQ);
   }
   return(OP);
 }
@@ -139,11 +141,21 @@ int* SimQIE::Out_ADC(Pulse* pp,int N)
 int SimQIE::TDC(Pulse* pp, float T0=0)
 {
   float thr2=TDC_thr/Gain;
-  if(pp->eval(T0)>TDC_thr) return(62);		// when pulse starts high
+  if(pp->eval(T0)>thr2) return(62);		// when pulse starts high
   for(float tt=T0;tt<T0+Tau;tt+=0.1){
-    if(pp->eval(tt)>=TDC_thr) return((int)(2*tt));
+    if(pp->eval(tt)>=thr2) return((int)(2*tt));
   }
   return(63);			// when pulse remains low all along
+}
+
+int* SimQIE::Out_TDC(Pulse* pp,int N)
+{
+  int* OP = new int[N];	// N no. of output ADCs
+
+  for(int i=0;i<N;i++){
+    OP[i] = TDC(pp,Tau*i);
+  }
+  return(OP);
 }
 
 int* SimQIE::CapID(Pulse* pp, int N)

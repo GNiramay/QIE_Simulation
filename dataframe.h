@@ -32,6 +32,8 @@ public:
 dataframe::dataframe(int maxTS_,Pulse* pl)
 {
   SimQIE* smq = new SimQIE();
+  smq->SetGain();		// by default, 1e+6
+  smq->SetFreq();		// by default, 40
   maxTS = maxTS_;
   ADCs = smq->Out_ADC(pl,maxTS);
   TDCs = smq->Out_TDC(pl,maxTS);
