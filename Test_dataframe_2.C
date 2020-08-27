@@ -33,6 +33,7 @@ void MakeTree()
   TH1F* h_pe = new TH1F("h_pe","raw no. of PEs",500,0,500);
   TH1F* h_All_adc = new TH1F("h_All_adc","raw ADC distribution",256,0,256);
   TH1F* h_All_tdc = new TH1F("h_All_tdc","TDC distribution",64,0,64);
+  TH1F* h_All_lin = new TH1F("h_All_lin","Reconstructed charge",500,0,500);
 
   TH2F* h2_adtd=new TH2F("h2_adtd","TDC vs. ADC",256,0,256,64,0,64);
   TH2F* h2_Q2Q[5];
@@ -86,6 +87,7 @@ void MakeTree()
 
 	h_All_adc->Fill(ADC_[j]);
 	h_All_tdc->Fill(TDC_[j]);
+	h_All_lin->Fill(sm.ADC2Q(ADC_[j]));
 
 	h2_adtd->Fill(ADC_[j],TDC_[j]);
 	h2_Q2Q[j]->Fill(PE,sm.ADC2Q(ADC_[j]));
@@ -108,6 +110,7 @@ void MakeTree()
   h_pe->Write();
   h_All_adc->Write();
   h_All_tdc->Write();
+  h_All_lin->Write();
   h2_adtd->Write();
   tr->Write();
   tf->Close();
