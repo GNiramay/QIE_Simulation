@@ -148,6 +148,7 @@ void Expo::SetRiseFall(float rr, float ff)
 
 float Expo::eval(float t_)
 {
+  if(NC==0) return(0);		// fast evaluation for zero pulse
   if(t_<=t0) return(0);
   float T = t_-t0;
   if(T<tmax) return(NC*(1-exp(-k*T))/tmax);
@@ -164,6 +165,7 @@ float Expo::Max()
 
 float Expo::Integrate(float T1, float T2)
 {
+  if(NC==0) return(0);		// for faster implementation of zero pulse
   if(T2<=t0) return(0);
   return(I_Int(T2)-I_Int(T1));
 }

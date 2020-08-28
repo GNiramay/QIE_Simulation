@@ -143,7 +143,7 @@ int SimQIE::TDC(Pulse* pp, float T0=0)
   float thr2=TDC_thr/Gain;
   if(pp->eval(T0)>thr2) return(62);		// when pulse starts high
   for(float tt=T0;tt<T0+Tau;tt+=0.1){
-    if(pp->eval(tt)>=thr2) return((int)(2*tt));
+    if(pp->eval(tt)>=thr2) return((int)(2*(tt-T0)));
   }
   return(63);			// when pulse remains low all along
 }

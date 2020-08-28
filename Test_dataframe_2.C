@@ -22,10 +22,19 @@ void MakeTree()
   SimQIE sm;			// to use ADC2Q function
   sm.SetGain();
 
+  Expo* temp = new Expo(0.1,5,30,1); // Trial 2
+  vector<float>t,x;
+  for(float i=0;i<100;i+=0.1){
+    t.push_back(i);
+    x.push_back(temp->eval(i));
+  }
+
   /////////////////////// Defining Onjects //////////////////////////////
   TTree* tr = new TTree("QIE","QIE output");
   tf->mkdir("ADC_Hists");
   tf->mkdir("TDC_Hists");
+  TGraph* g_pulse = new TGraph(t.size(),&t[0],&x[0]);
+  g_pulse->SetTitle("Unit pulse shape;time[ns];current[micro A]");
   TH1F* h_adc[5];
   TH1F* h_tdc[5];
   TH1F* h_lin[5];
@@ -33,7 +42,7 @@ void MakeTree()
   TH1F* h_pe = new TH1F("h_pe","raw no. of PEs",500,0,500);
   TH1F* h_All_adc = new TH1F("h_All_adc","raw ADC distribution",256,0,256);
   TH1F* h_All_tdc = new TH1F("h_All_tdc","TDC distribution",64,0,64);
-  TH1F* h_All_lin = new TH1F("h_All_lin","Reconstructed charge",500,0,500);
+  TH1F* h_All_lin = new TH1F("h_All_lin","Total Reco. charge",500,0,500);
 
   TH2F* h2_adtd=new TH2F("h2_adtd","TDC vs. ADC",256,0,256,64,0,64);
   TH2F* h2_Q2Q[5];
@@ -65,33 +74,54 @@ void MakeTree()
     tr->Branch("CID"+id,CID[i],"CID"+id+"[maxTS]/I");
   }
 
+  /////////////////////// Fill all with only noise///////////////////////
+  Expo* ex0 = new Expo(0,1,0,0);
+  for(int i=0;i<50;i++){
+    dataframe* dt = new dataframe(maxTS,ex0,6,1.5);
+    int* ADC_ = dt->GetADC();
+    int* TDC_ = dt->GetTDC();
+    int* CID_ = dt->GetCID();
+
+    for(int j=0;j<maxTS;j++){
+      ADC[i][j]=ADC_[j];
+      TDC[i][j]=TDC_[j];
+      CID[i][j]=CID_[j];
+    }
+  }
+
   /////////////////////// Filling Branches //////////////////////////////
   while(ii1>>ND){
     for(int i=0;i<ND;i++){
       ii2>>PE;
       ii3>>barID;
-      Expo* ex = new Expo(0.1,35,0,PE);
-      dataframe* dt = new dataframe(maxTS,ex);
+      // Expo* ex = new Expo(0.1,35,0,PE); // Trial 1
+      Expo* ex = new Expo(0.1,5,30,PE); // Trial 2
+      // dataframe* dt = new dataframe(maxTS,ex); // without noise
+      dataframe* dt = new dataframe(maxTS,ex,6,1.5); // with noise
 
       int* ADC_ = dt->GetADC();
       int* TDC_ = dt->GetTDC();
       int* CID_ = dt->GetCID();
+
+      float RecoQ=0;
       for(int j=0;j<maxTS;j++){
-	ADC[barID][j]=ADC_[j];
-	TDC[barID][j]=TDC_[j];
-	CID[barID][j]=CID_[j];
+  	ADC[barID][j]=ADC_[j];
+  	TDC[barID][j]=TDC_[j];
+  	CID[barID][j]=CID_[j];
+	RecoQ+=sm.ADC2Q(ADC_[j]);
+	
+  	h_adc[j]->Fill(ADC_[j]);
+  	h_tdc[j]->Fill(TDC_[j]);
+  	h_lin[j]->Fill(sm.ADC2Q(ADC_[j]));
 
-	h_adc[j]->Fill(ADC_[j]);
-	h_tdc[j]->Fill(TDC_[j]);
-	h_lin[j]->Fill(sm.ADC2Q(ADC_[j]));
+  	h_All_adc->Fill(ADC_[j]);
+  	h_All_tdc->Fill(TDC_[j]);
+  	// h_All_lin->Fill(sm.ADC2Q(ADC_[j]));
 
-	h_All_adc->Fill(ADC_[j]);
-	h_All_tdc->Fill(TDC_[j]);
-	h_All_lin->Fill(sm.ADC2Q(ADC_[j]));
-
-	h2_adtd->Fill(ADC_[j],TDC_[j]);
-	h2_Q2Q[j]->Fill(PE,sm.ADC2Q(ADC_[j]));
+  	h2_adtd->Fill(ADC_[j],TDC_[j]);
+  	h2_Q2Q[j]->Fill(PE,sm.ADC2Q(ADC_[j]));
       }
+      h_All_lin->Fill(RecoQ);
       h_pe->Fill(PE);
     }
     tr->Fill();
@@ -112,6 +142,7 @@ void MakeTree()
   h_All_tdc->Write();
   h_All_lin->Write();
   h2_adtd->Write();
+  g_pulse->Write();
   tr->Write();
   tf->Close();
 }

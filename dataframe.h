@@ -5,7 +5,7 @@
 class dataframe
 {
 public:
-  dataframe(int maxTS_,Pulse* pl);
+  dataframe(int maxTS_,Pulse* pl, float pd=0, float ns=0);
 
   int* GetADC(){return(ADCs);}
   int* GetTDC(){return(TDCs);}
@@ -29,9 +29,11 @@ public:
 };
 /////////////////////////////////////////////////////////////////////////
 
-dataframe::dataframe(int maxTS_,Pulse* pl)
+dataframe::dataframe(int maxTS_,Pulse* pl, float pd=0, float ns=0)
 {
-  SimQIE* smq = new SimQIE();
+  SimQIE* smq;
+  if(ns==0) smq = new SimQIE();
+  else smq = new SimQIE(pd,ns);
   smq->SetGain();		// by default, 1e+6
   smq->SetFreq();		// by default, 40
   maxTS = maxTS_;
