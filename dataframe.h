@@ -6,6 +6,7 @@ class dataframe
 {
 public:
   dataframe(int maxTS_,Pulse* pl, float pd=0, float ns=0);
+  dataframe(int maxTS_,Pulse* pl, SimQIE* sm);
 
   int* GetADC(){return(ADCs);}
   int* GetTDC(){return(TDCs);}
@@ -40,6 +41,14 @@ dataframe::dataframe(int maxTS_,Pulse* pl, float pd=0, float ns=0)
   ADCs = smq->Out_ADC(pl,maxTS);
   TDCs = smq->Out_TDC(pl,maxTS);
   CIDs = smq->CapID(pl,maxTS);
+}
+
+dataframe::dataframe(int maxTS_,Pulse* pl, SimQIE* sm)
+{
+  maxTS = maxTS_;
+  ADCs = sm->Out_ADC(pl,maxTS);
+  TDCs = sm->Out_TDC(pl,maxTS);
+  CIDs = sm->CapID(pl,maxTS);
 }
 
 digiCollection::digiCollection(){}

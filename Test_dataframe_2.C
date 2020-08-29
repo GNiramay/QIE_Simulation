@@ -19,7 +19,7 @@ void MakeTree()
   ifstream ii3("TXT_IN/barID.txt");
   TFile* tf = new TFile("ROOT_OUT/TempTrial_2.root","RECREATE");
 
-  SimQIE sm;			// to use ADC2Q function
+  SimQIE sm;
   sm.SetGain();
 
   Expo* temp = new Expo(0.1,5,30,1); // Trial 2
@@ -45,6 +45,7 @@ void MakeTree()
   TH1F* h_All_lin = new TH1F("h_All_lin","Total Reco. charge",500,0,500);
 
   TH2F* h2_adtd=new TH2F("h2_adtd","TDC vs. ADC",256,0,256,64,0,64);
+  TH2F* h2_All_Q2Q= new TH2F("h2_All_Q2Q","reco PE vs. raw PE;raw PE;Reco PE",500,0,500,500,0,500);
   TH2F* h2_Q2Q[5];
   
   for(int i=0;i<5;i++){
@@ -76,8 +77,13 @@ void MakeTree()
 
   /////////////////////// Fill all with only noise///////////////////////
   Expo* ex0 = new Expo(0,1,0,0);
+  SimQIE* smq = new SimQIE(6,1.5);
+  smq->SetGain();
+  smq->SetFreq();
+
   for(int i=0;i<50;i++){
-    dataframe* dt = new dataframe(maxTS,ex0,6,1.5);
+    // dataframe* dt = new dataframe(maxTS,ex0,6,1.5);
+    dataframe* dt = new dataframe(maxTS,ex0,smq);
     int* ADC_ = dt->GetADC();
     int* TDC_ = dt->GetTDC();
     int* CID_ = dt->GetCID();
@@ -97,7 +103,8 @@ void MakeTree()
       // Expo* ex = new Expo(0.1,35,0,PE); // Trial 1
       Expo* ex = new Expo(0.1,5,30,PE); // Trial 2
       // dataframe* dt = new dataframe(maxTS,ex); // without noise
-      dataframe* dt = new dataframe(maxTS,ex,6,1.5); // with noise
+      // dataframe* dt = new dataframe(maxTS,ex,6,1.5); // with noise
+      dataframe* dt = new dataframe(maxTS,ex,smq); // random noise across channels
 
       int* ADC_ = dt->GetADC();
       int* TDC_ = dt->GetTDC();
@@ -122,6 +129,7 @@ void MakeTree()
   	h2_Q2Q[j]->Fill(PE,sm.ADC2Q(ADC_[j]));
       }
       h_All_lin->Fill(RecoQ);
+      h2_All_Q2Q->Fill(PE,RecoQ);
       h_pe->Fill(PE);
     }
     tr->Fill();
@@ -142,6 +150,7 @@ void MakeTree()
   h_All_tdc->Write();
   h_All_lin->Write();
   h2_adtd->Write();
+  h2_All_Q2Q->Write();
   g_pulse->Write();
   tr->Write();
   tf->Close();
