@@ -4,12 +4,12 @@
 void MakeTree();
 void MakeHists(TString);
 void FixnPrint(TH1F* hh,TString fname);
-void FixnPrint(TH2F* hh,TString fname,bool IsLogZ=false);
+void FixnPrint(TH2F* hh,TString fname,bool IsLogZ=false, bool IsGrid=false);
 
 void Test_dataframe_2()
 {
-  MakeTree();
-  // MakeHists("ROOT_OUT/TempTrial_2.root");
+  // MakeTree();
+  MakeHists("ROOT_OUT/TempTrial_2.root");
 }
 
 void MakeTree()
@@ -43,9 +43,12 @@ void MakeTree()
   TH1F* h_All_adc = new TH1F("h_All_adc","raw ADC distribution",256,0,256);
   TH1F* h_All_tdc = new TH1F("h_All_tdc","TDC distribution",64,0,64);
   TH1F* h_All_lin = new TH1F("h_All_lin","Total Reco. charge",500,0,500);
+  TH1F* h_reco_err= new TH1F("h_reco_err","Relative error of reconstructing PE",500,-0.5,0.5);
 
+  TH2F* h2_recoerr_PE= new TH2F("h2_recoerr_PE","Relative error of reconstructing PE vs PE",250,0,500,50,-0.1,0.3);
   TH2F* h2_adtd=new TH2F("h2_adtd","TDC vs. ADC",256,0,256,64,0,64);
-  TH2F* h2_All_Q2Q= new TH2F("h2_All_Q2Q","reco PE vs. raw PE;raw PE;Reco PE",500,0,500,500,0,500);
+  // TH2F* h2_All_Q2Q= new TH2F("h2_All_Q2Q","reco PE vs. raw PE;raw PE;Reco PE",500,0,500,500,0,500);
+  TH2F* h2_All_Q2Q= new TH2F("h2_All_Q2Q","reco PE vs. raw PE;raw PE;Reco PE",100,0,500,100,0,500);
   TH2F* h2_Q2Q[5];
   
   for(int i=0;i<5;i++){
@@ -131,6 +134,8 @@ void MakeTree()
       h_All_lin->Fill(RecoQ);
       h2_All_Q2Q->Fill(PE,RecoQ);
       h_pe->Fill(PE);
+      h_reco_err->Fill((RecoQ-PE)/PE);
+      h2_recoerr_PE->Fill(PE,(RecoQ-PE)/PE);
     }
     tr->Fill();
   }
@@ -149,6 +154,9 @@ void MakeTree()
   h_All_adc->Write();
   h_All_tdc->Write();
   h_All_lin->Write();
+  h_reco_err->Write();
+
+  h2_recoerr_PE->Write();
   h2_adtd->Write();
   h2_All_Q2Q->Write();
   g_pulse->Write();
@@ -158,55 +166,32 @@ void MakeTree()
 
 void MakeHists(TString ifname)
 {
-  SimQIE sm;			// to use ADC2Q function
-  sm.SetGain();
-  TFile* f0 = new TFile(ifname);
-  TTree* T = (TTree*)f0->Get("QIE");
-
-  int nn = T->GetEntries();
-  ifstream aa("TXT_IN/pe.txt");
-
-  TFile* ff = new TFile("ROOT_OUT/dataframe_Graphs.root","RECREATE");
-  TH1F* h_pe = new TH1F("h_pe","raw no. of PEs",500,0,500);
-  TH1F* h_All_adc = new TH1F("h_All_adc","raw ADC distribution",256,0,256);
-  TH1F* h_All_tdc = new TH1F("h_All_tdc","TDC distribution",64,0,64);
-  TH1F* h_All_lin = new TH1F("h_All_lin","Charge reconstructed from ADCs",500,0,500);
-
-  TH2F* h2_adtd=new TH2F("h2_adtd","TDC vs. ADC",256,0,256,64,0,64);
-  TH2F* h2_Q2Q = new TH2F("h2_Q2Q","reco PE vs. raw PE;raw PE;Reco PE",500,0,500,500,0,500);
+  // List of Histograms I need:
+  // TDC vs. ADC
+  // Reco PE vs. raw PE
+  // ADC distributions for 5 time samples
+  // TDC distributions for 5 time samples
   
-  int maxTS=5;			// no. of time samples stored
-  int* ADC = new int[maxTS];
-  int* TDC = new int[maxTS];
-  int* CID = new int[maxTS];
+  gStyle->SetOptStat(0);
+  TFile* f2 = new TFile(ifname);
+  TH2F* h2_adtd = (TH2F*)f2->Get("h2_adtd");
+  TH2F* h2_All_Q2Q = (TH2F*)f2->Get("h2_All_Q2Q");
 
-  T->SetBranchAddress("ADC",ADC);
-  T->SetBranchAddress("TDC",TDC);
-  T->SetBranchAddress("CID",CID);
+  // FixnPrint(h2_All_Q2Q,"PE_Reco_vs_Sim",true,true); // The graphs hv been plotted and cropped
+  // h2_adtd->SetTitle(";ADC;TDC");
+  // FixnPrint(h2_adtd,"TDC_vs_ADC",true,true); // The graphs hv been plotted and cropped
 
-  int PE;
-  // while(aa>>PE) h_pe->Fill(PE);
+  TH1F* h1 = (TH1F*)f2->Get("h_pe");
+  TH1F* h2 = (TH1F*)f2->Get("h_All_lin");
 
-  for(int i=0;i<nn && aa>>PE;i++){
-    T->GetEntry(i);
-    for(int j=0;j<maxTS;j++){
-      h_All_adc->Fill(ADC[j]);
-      h_All_tdc->Fill(TDC[j]);
-      // h_All_lin->Fill(sm.ADC2Q(ADC[j]));
-      h2_adtd->Fill(ADC[j],TDC[j]);
-    }
-    h_All_lin->Fill(sm.ADC2Q(ADC[0]));
-    h_pe->Fill(PE);
-    h2_Q2Q->Fill(PE,sm.ADC2Q(ADC[1]));
-  }
-
-  // FixnPrint(h_All_adc,"raw_ADC");
-  // FixnPrint(h_All_tdc,"raw_TDC");
-  // FixnPrint(h_pe,"raw_PE");
-  // FixnPrint(h2_adtd,"raw_ad_vs_td",true);
-
-  ff->Write();
-  ff->Close();
+  TCanvas* tc = new TCanvas("aa","bb",800,600);
+  h1->Draw("hist"); h1->SetLineWidth(4); h1->SetLineColor(4); h1->Rebin(4);
+  h2->Draw("p same"); h2->SetMarkerStyle(21); h2->Rebin(4); h2->SetMarkerColor(2);
+  tc->SetLogy();
+  tc->BuildLegend(0.5,0.65,0.9,0.9);
+  tc->SaveAs("PNG_OUT/PE_raw_reco_1D.png");
+  tc->SaveAs("PDF_OUT/PE_raw_reco_1D.pdf");
+  gSystem->Exec("pdfcrop PDF_OUT/PE_raw_reco_1D.pdf PDF_OUT/PE_raw_reco_1D.pdf");
 }
 
 void FixnPrint(TH1F* hh,TString fname)
@@ -225,12 +210,14 @@ void FixnPrint(TH1F* hh,TString fname)
   delete tc;
 }
 
-void FixnPrint(TH2F* hh,TString fname,bool IsLogZ=false)
+void FixnPrint(TH2F* hh,TString fname,bool IsLogZ=false, bool IsGrid=false)
 {
+  gStyle->SetOptStat(0);
   TCanvas* tc = new TCanvas("aa","bb",800,600);
   hh->Draw("colz");
 
   if(IsLogZ) tc->SetLogz();
+  if(IsGrid) tc->SetGrid();
   tc->SaveAs("PNG_OUT/"+fname+".png");
   tc->SaveAs("PDF_OUT/"+fname+".pdf");
   delete tc;

@@ -26,7 +26,7 @@ class digiCollection
 public:
   digiCollection();
   
-  vector<dataframe> digis;
+  vector<dataframe> digis;	/* reco hits maybe */
 };
 /////////////////////////////////////////////////////////////////////////
 
